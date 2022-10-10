@@ -1,4 +1,4 @@
-import { Layout } from "~/components/Layout.server";
+import {Layout} from '~/components/index.server';
 
 export default function Home() {
   return (
