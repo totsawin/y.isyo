@@ -1,18 +1,69 @@
+import {Suspense} from 'react';
+import {useShopQuery, gql, useLocalization, Seo} from '@shopify/hydrogen';
+
+import {PRODUCT_CARD_FRAGMENT} from '~/lib/fragments';
+import {PAGINATION_SIZE} from '~/lib/const';
+import {ProductGrid, PageHeader, Section} from '~/components';
 import {Layout} from '~/components/index.server';
 
 export default function Home() {
   return (
     <Layout>
-      <div className="p-6 md:p-8 lg:p-12">
-        <h1 className="font-extrabold mb-4 text-5xl md:text-7xl">
-          Hello world!
-        </h1>
-        <p className="font-bold mb-3">Welcome to Hydrogen.</p>
-        <p>
-          Hydrogen is a front-end web development framework used for building
-          Shopify custom storefronts.
-        </p>
-      </div>
+      <Seo type="page" data={{title: 'All Products'}} />
+      <PageHeader heading="All Products" variant="allCollections" />
+      <Section>
+        <Suspense>
+          <AllProductsGrid />
+        </Suspense>
+      </Section>
     </Layout>
   );
 }
+
+function AllProductsGrid() {
+  const {
+    language: {isoCode: languageCode},
+    country: {isoCode: countryCode},
+  } = useLocalization();
+
+  const {data} = useShopQuery({
+    query: ALL_PRODUCTS_QUERY,
+    variables: {
+      country: countryCode,
+      language: languageCode,
+      pageBy: PAGINATION_SIZE,
+    },
+    preload: true,
+  });
+
+  const products = data.products;
+
+  return (
+    <ProductGrid
+      key="products"
+      url={`/products?country=${countryCode}`}
+      collection={{products}}
+    />
+  );
+}
+
+const ALL_PRODUCTS_QUERY = gql`
+  ${PRODUCT_CARD_FRAGMENT}
+  query AllProducts(
+    $country: CountryCode
+    $language: LanguageCode
+    $pageBy: Int!
+    $cursor: String
+  ) @inContext(country: $country, language: $language) {
+    products(first: $pageBy, after: $cursor) {
+      nodes {
+        ...ProductCard
+      }
+      pageInfo {
+        hasNextPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
