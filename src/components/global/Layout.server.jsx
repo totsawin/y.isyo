@@ -1,71 +1,124 @@
-import {
-  useShopQuery,
-  CacheLong,
-  gql,
-  useUrl,
-  Link,
-  Seo,
-} from "@shopify/hydrogen";
-import { Suspense } from "react";
+import {Suspense} from 'react';
+import {useLocalization, useShopQuery, CacheLong, gql} from '@shopify/hydrogen';
+
+import {Header} from '~/components';
+import {Footer} from '~/components/index.server';
+import {parseMenu} from '~/lib/utils';
+
+const HEADER_MENU_HANDLE = 'main-menu';
+const FOOTER_MENU_HANDLE = 'footer';
+
+const SHOP_NAME_FALLBACK = 'Hydrogen';
 
 /**
  * A server component that defines a structure and organization of a page that can be used in different parts of the Hydrogen app
  */
-export function Layout({ children }) {
-  const { pathname } = useUrl();
-  const isHome = pathname === "/";
-
-  const {
-    data: { shop },
-  } = useShopQuery({
-    query: SHOP_QUERY,
-    cache: CacheLong(),
-    preload: true,
-  });
-
+export function Layout({children}) {
   return (
     <>
-      <Suspense>
-        <Seo
-          type="defaultSeo"
-          data={{
-            title: shop.name,
-            description: shop.description,
-          }}
-        />
-      </Suspense>
-      <div className="flex flex-col min-h-screen antialiased bg-neutral-50">
+      <div className="flex flex-col min-h-screen">
         <div className="">
           <a href="#mainContent" className="sr-only">
             Skip to content
           </a>
         </div>
-        <header
-          role="banner"
-          className={`flex items-center h-16 p-6 md:p-8 lg:p-12 sticky backdrop-blur-lg z-40 top-0 justify-between w-full leading-none gap-4 antialiased transition shadow-sm ${
-            isHome ? "bg-black/80 text-white" : "bg-white/80"
-          }`}
-        >
-          <div className="flex gap-12">
-            <Link className="font-bold" to="/">
-              {shop.name}
-            </Link>
-          </div>
-        </header>
-
+        <Suspense fallback={<Header title={SHOP_NAME_FALLBACK} />}>
+          <HeaderWithMenu />
+        </Suspense>
         <main role="main" id="mainContent" className="flex-grow">
-          <Suspense>{children}</Suspense>
+          {children}
         </main>
       </div>
+      <Suspense fallback={<Footer />}>
+        <FooterWithMenu />
+      </Suspense>
     </>
   );
 }
 
+function HeaderWithMenu() {
+  const {shopName, headerMenu} = useLayoutQuery();
+  return <Header title={shopName} menu={headerMenu} />;
+}
+
+function FooterWithMenu() {
+  const {footerMenu} = useLayoutQuery();
+  return <Footer menu={footerMenu} />;
+}
+
+function useLayoutQuery() {
+  const {
+    language: {isoCode: languageCode},
+  } = useLocalization();
+
+  const {data} = useShopQuery({
+    query: SHOP_QUERY,
+    variables: {
+      language: languageCode,
+      headerMenuHandle: HEADER_MENU_HANDLE,
+      footerMenuHandle: FOOTER_MENU_HANDLE,
+    },
+    cache: CacheLong(),
+    preload: '*',
+  });
+
+  const shopName = data ? data.shop.name : SHOP_NAME_FALLBACK;
+
+  /*
+        Modify specific links/routes (optional)
+        @see: https://shopify.dev/api/storefront/unstable/enums/MenuItemType
+        e.g here we map:
+          - /blogs/news -> /news
+          - /blog/news/blog-post -> /news/blog-post
+          - /collections/all -> /products
+      */
+  const customPrefixes = {BLOG: '', CATALOG: 'products'};
+
+  const headerMenu = data?.headerMenu
+    ? parseMenu(data.headerMenu, customPrefixes)
+    : undefined;
+
+  const footerMenu = data?.footerMenu
+    ? parseMenu(data.footerMenu, customPrefixes)
+    : undefined;
+
+  return {footerMenu, headerMenu, shopName};
+}
+
 const SHOP_QUERY = gql`
-  query ShopInfo {
+  fragment MenuItem on MenuItem {
+    id
+    resourceId
+    tags
+    title
+    type
+    url
+  }
+  query layoutMenus(
+    $language: LanguageCode
+    $headerMenuHandle: String!
+    $footerMenuHandle: String!
+  ) @inContext(language: $language) {
     shop {
       name
-      description
+    }
+    headerMenu: menu(handle: $headerMenuHandle) {
+      id
+      items {
+        ...MenuItem
+        items {
+          ...MenuItem
+        }
+      }
+    }
+    footerMenu: menu(handle: $footerMenuHandle) {
+      id
+      items {
+        ...MenuItem
+        items {
+          ...MenuItem
+        }
+      }
     }
   }
 `;
