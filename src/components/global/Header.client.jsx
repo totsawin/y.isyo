@@ -1,4 +1,4 @@
-import {Link, useUrl, useCart} from '@shopify/hydrogen';
+import {Link, useUrl, useCart, Image} from '@shopify/hydrogen';
 import {useWindowScroll} from 'react-use';
 
 import {
@@ -104,9 +104,12 @@ function MobileHeader({countryCode, title, isHome, openCart, openMenu}) {
         className="flex items-center self-stretch leading-[3rem] md:leading-[4rem] justify-center flex-grow w-full h-full"
         to="/"
       >
-        <Heading className="font-bold text-center" as={isHome ? 'h1' : 'h2'}>
-          {title}
-        </Heading>
+        <Image
+          src="/y.isyo_logo-06.png"
+          width={80}
+          height={80}
+          alt={`${title} logo`}
+        />
       </Link>
 
       <div className="flex items-center justify-end w-full gap-4">
@@ -139,9 +142,14 @@ function DesktopHeader({countryCode, isHome, menu, openCart, title}) {
 
   return (
     <header role="banner" className={styles.container}>
-      <div className="flex gap-12">
-        <Link className={`font-bold`} to="/">
-          {title}
+      <div className="flex gap-12 items-center">
+        <Link to="/">
+          <Image
+            src="/y.isyo_logo-06.png"
+            width={100}
+            height={100}
+            alt={`${title} logo`}
+          />
         </Link>
         <nav className="flex gap-8">
           {/* Top level menu items */}
