@@ -14,21 +14,19 @@ import {getProductPlaceholder} from '~/lib/placeholders';
 export function ProductCard({product, label, className, loading, onClick}) {
   let cardLabel;
 
-  const cardData = product?.variants ? product : getProductPlaceholder();
+  const image = flattenConnection(product.images)[0];
+  const { 
+    minVariantPrice,
+    maxVariantPrice
+  } = product.priceRange;
 
-  const {
-    image,
-    priceV2: price,
-    compareAtPriceV2: compareAtPrice,
-  } = flattenConnection(cardData?.variants)[0] || {};
-
-  if (label) {
-    cardLabel = label;
-  } else if (isDiscounted(price, compareAtPrice)) {
-    cardLabel = 'Sale';
-  } else if (isNewArrival(product.publishedAt)) {
-    cardLabel = 'New';
-  }
+  // if (label) {
+  //   cardLabel = label;
+  // } else if (isDiscounted(price, compareAtPrice)) {
+  //   cardLabel = 'Sale';
+  // } else if (isNewArrival(product.publishedAt)) {
+  //   cardLabel = 'New';
+  // }
 
   const styles = clsx('grid gap-6', className);
 
@@ -69,14 +67,16 @@ export function ProductCard({product, label, className, loading, onClick}) {
             {product.title}
           </Text>
           <div className="flex gap-4">
-            <Text className="flex gap-4">
-              <Money withoutTrailingZeros data={price} />
-              {isDiscounted(price, compareAtPrice) && (
+            <Text className="flex gap-1">
+              <Money withoutTrailingZeros data={minVariantPrice} />
+              -
+              <Money withoutTrailingZeros data={maxVariantPrice} />
+              {/* {isDiscounted(price, compareAtPrice) && (
                 <CompareAtPrice
                   className={'opacity-50'}
                   data={compareAtPrice}
                 />
-              )}
+              )} */}
             </Text>
           </div>
         </div>
@@ -85,16 +85,16 @@ export function ProductCard({product, label, className, loading, onClick}) {
   );
 }
 
-function CompareAtPrice({data, className}) {
-  const {currencyNarrowSymbol, withoutTrailingZerosAndCurrency} =
-    useMoney(data);
+// function CompareAtPrice({data, className}) {
+//   const {currencyNarrowSymbol, withoutTrailingZerosAndCurrency} =
+//     useMoney(data);
 
-  const styles = clsx('strike', className);
+//   const styles = clsx('strike', className);
 
-  return (
-    <span className={styles}>
-      {currencyNarrowSymbol}
-      {withoutTrailingZerosAndCurrency}
-    </span>
-  );
-}
+//   return (
+//     <span className={styles}>
+//       {currencyNarrowSymbol}
+//       {withoutTrailingZerosAndCurrency}
+//     </span>
+//   );
+// }

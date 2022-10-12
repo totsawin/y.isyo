@@ -1,4 +1,4 @@
-import {gql} from '@shopify/hydrogen';
+import { gql } from '@shopify/hydrogen';
 
 export const MEDIA_FRAGMENT = gql`
   fragment Media on Media {
@@ -59,6 +59,29 @@ export const PRODUCT_CARD_FRAGMENT = gql`
         compareAtPriceV2 {
           amount
           currencyCode
+        }
+      }
+    }
+  }
+`;
+
+export const ALL_PRODUCTS_FRAGMENT = gql`
+  fragment ProductFirstPage on Product {
+    id
+    title
+    publishedAt
+    handle
+    priceRange {
+      minVariantPrice { amount, currencyCode }
+      maxVariantPrice { amount, currencyCode }
+    }
+    images(first:1) {
+      edges {
+        node {
+          url
+          altText
+          width
+          height
         }
       }
     }

@@ -1,7 +1,7 @@
 import {Suspense} from 'react';
 import {useShopQuery, gql, useLocalization, Seo} from '@shopify/hydrogen';
 
-import {PRODUCT_CARD_FRAGMENT} from '~/lib/fragments';
+import {ALL_PRODUCTS_FRAGMENT} from '~/lib/fragments';
 import {PAGINATION_SIZE} from '~/lib/const';
 import {ProductGrid, PageHeader, Section} from '~/components';
 import {Layout} from '~/components/index.server';
@@ -48,7 +48,7 @@ function AllProductsGrid() {
 }
 
 const ALL_PRODUCTS_QUERY = gql`
-  ${PRODUCT_CARD_FRAGMENT}
+  ${ALL_PRODUCTS_FRAGMENT}
   query AllProducts(
     $country: CountryCode
     $language: LanguageCode
@@ -57,7 +57,7 @@ const ALL_PRODUCTS_QUERY = gql`
   ) @inContext(country: $country, language: $language) {
     products(first: $pageBy, after: $cursor) {
       nodes {
-        ...ProductCard
+        ...ProductFirstPage
       }
       pageInfo {
         hasNextPage
